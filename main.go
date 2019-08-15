@@ -17,7 +17,7 @@ func init() {
 
 var rootCmd = &cobra.Command{
 	Use:   "wtf",
-	Short: "Wrapper for Terraform: tansparently work with multiple terrafrom versions",
+	Short: "Wrapper for Terraform: Transparently work with multiple terraform versions",
 }
 
 var execCmd = &cobra.Command{
