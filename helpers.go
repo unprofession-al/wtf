@@ -50,7 +50,7 @@ func detectSyntax() (version.Constraints, error) {
 		all = append(all, data...)
 	}
 
-	matched, err := regexp.Match(`\${.*}`, all)
+	matched, err := regexp.Match(`"\${.*}"`, all)
 	if err != nil {
 		return version.Constraints{}, err
 	}
