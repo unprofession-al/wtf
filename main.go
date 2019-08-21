@@ -21,8 +21,9 @@ var rootCmd = &cobra.Command{
 }
 
 var execCmd = &cobra.Command{
-	Use:   "exec",
-	Short: "run correct version of terraform",
+	Use:                "exec",
+	Short:              "run correct version of terraform",
+	DisableFlagParsing: true,
 	Run: func(cmd *cobra.Command, args []string) {
 		k, err := NewConfiguration()
 		if err != nil {
