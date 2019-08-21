@@ -101,7 +101,7 @@ func (tf *Terraform) DownloadVersion(v *version.Version) error {
 	url := fmt.Sprintf("https://releases.hashicorp.com/terraform/%s/terraform_%s_%s_%s.zip", v.String(), v.String(), runtime.GOOS, runtime.GOARCH)
 	filename := fmt.Sprintf("%s/%s", tf.location, v.String())
 
-	fmt.Printf("get %s", url)
+	fmt.Printf("Getting %s...\n", url)
 	resp, err := http.Get(url)
 	if err != nil {
 		return fmt.Errorf("Could not download %s: %s", url, err.Error())
