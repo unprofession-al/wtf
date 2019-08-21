@@ -17,6 +17,12 @@ will be rendered to a temp file and then executed rather than terraform itself.
 
 ## Install
 
+### Binary Download
+
+Navigate to [Releases](https://github.com/unprofession-al/wtf/releases), grab
+the package that matches your operating system and achitecture. Unpack the archive
+and put the binary file somewhere in your `$PATH`
+
 ### From Source
 
 Make sure you have [go](https://golang.org/doc/install) installed, then run: 
