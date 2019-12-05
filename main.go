@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 
 	"github.com/hashicorp/go-version"
 	"github.com/spf13/cobra"
@@ -20,43 +21,51 @@ var rootCmd = &cobra.Command{
 	Short: "Wrapper for Terraform: Transparently work with multiple terraform versions",
 }
 
+func runTerraform(args []string, verbose bool) {
+	k, err := NewConfiguration()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	c, err := readConstraint(k.DetectSyntax)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	tf, err := NewTerraform(k.BinaryStorePath, verbose)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	if verbose {
+		fmt.Printf("Version constraint: %s\n", c.String())
+	}
+
+	latest, err := tf.FindLatest(c)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	if verbose {
+		fmt.Printf("Version used: %s\n\n", latest.String())
+	}
+
+	s, err := tf.Run(latest, args, k.Wrapper)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	os.Exit(s.ExitCode())
+}
+
 var execCmd = &cobra.Command{
 	Use:                "exec",
 	Short:              "run correct version of terraform",
 	DisableFlagParsing: true,
 	Run: func(cmd *cobra.Command, args []string) {
-		k, err := NewConfiguration()
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		c, err := readConstraint(k.DetectSyntax)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		tf, err := NewTerraform(k.BinaryStorePath)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		fmt.Printf("Version constraint: %s\n", c.String())
-
-		latest, err := tf.FindLatest(c)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		fmt.Printf("Version used: %s\n\n", latest.String())
-
-		s, err := tf.Run(latest, args, k.Wrapper)
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-		os.Exit(s.ExitCode())
+		runTerraform(args, true)
 	},
 }
 
@@ -101,7 +110,7 @@ var installCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		tf, err := NewTerraform(k.BinaryStorePath)
+		tf, err := NewTerraform(k.BinaryStorePath, true)
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
@@ -137,6 +146,17 @@ var installCmd = &cobra.Command{
 }
 
 func main() {
+	bin := os.Args[0]
+	args := []string{}
+	if len(os.Args) > 1 {
+		args = os.Args[1:]
+	}
+
+	if filepath.Base(bin) == "terraform" {
+		runTerraform(args, false)
+		os.Exit(0)
+	}
+
 	if err := rootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)

@@ -15,14 +15,16 @@ import (
 
 type Terraform struct {
 	location string
+	verbose  bool
 	versions version.Collection
 }
 
-func NewTerraform(location string) (*Terraform, error) {
+func NewTerraform(location string, verbose bool) (*Terraform, error) {
 	location = expandPath(location)
 	createDir(location)
 	tf := &Terraform{
 		location: strings.TrimRight(location, "/"),
+		verbose:  verbose,
 	}
 	files, err := ioutil.ReadDir(tf.location)
 	if err != nil {
@@ -79,7 +81,7 @@ func (tf *Terraform) Run(v *version.Version, args []string, w wrapper) (*os.Proc
 
 	bin := fmt.Sprintf("%s/%s", tf.location, v.String())
 
-	cmd, args, err := w.Wrap(bin, args)
+	cmd, args, err := w.Wrap(bin, args, tf.verbose)
 	if err != nil {
 		return nil, err
 	}

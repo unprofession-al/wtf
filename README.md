@@ -7,7 +7,7 @@ and helps you to run the version required for your project.
 
 * Install new (or old) versions of terraform using `wtf install [terraform_version]`.
 * Run terraform via `wtf exec ...` (using the regular terraform commands and options) to execute 
-`terraform` or use `alias terraform="wtf exec"` for convenience.
+`terraform` or create a symlink from `terraform` to `wtf` for convenience.
 * Detect if a project has used pre or post v0.12.0 terraform syntax automatically and run the best 
 fitting terraform version automatically.
 * Force a certain version by putting your version constraints (such as `>= 0.12.0`) in a 
@@ -68,11 +68,16 @@ detect_syntax: true
 wrapper:
   script_template: |
     #!/bin/bash
+    verbose={{.Verbose}}
     if [ -f $(pwd)/secrets.yml ]; then
-      echo "SUMMON PASSWORDS FOR TERRAFORM"
-      summon -p ~/.bin/summon-gopass {{.}}
+      if [ "$verbose" = true ]; then
+        echo "SUMMON PASSWORDS FOR TERRAFORM"
+      fi
+      summon -p ~/.bin/summon-gopass {{.Command}}
     else
-      echo "RUN PLAIN TERRAFORM"
-      {{.}}
+      if [ "$verbose" = true ]; then
+        echo "RUN PLAIN TERRAFORM"
+      fi
+      {{.Command}}
     fi
 ```

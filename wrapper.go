@@ -14,11 +14,19 @@ type wrapper struct {
 	tmpfile        *os.File
 }
 
-func (w *wrapper) Wrap(command string, args []string) (string, []string, error) {
+func (w *wrapper) Wrap(command string, args []string, verbose bool) (string, []string, error) {
 	if w.ScriptTemplate == "" {
 		return command, args, nil
 	}
 	c := strings.Join(append([]string{command}, args...), " ")
+
+	data := struct {
+		Command string
+		Verbose bool
+	}{
+		Command: c,
+		Verbose: verbose,
+	}
 
 	var out bytes.Buffer
 	tmpl, err := template.New("wrapper").Parse(w.ScriptTemplate)
@@ -26,7 +34,7 @@ func (w *wrapper) Wrap(command string, args []string) (string, []string, error) 
 		return command, args, err
 	}
 
-	err = tmpl.Execute(&out, c)
+	err = tmpl.Execute(&out, data)
 	if err != nil {
 		return command, args, err
 	}
