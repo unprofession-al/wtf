@@ -50,7 +50,7 @@ func (c *conf) Interactive() error {
 	}
 	c.VersionContraintFileName, err = prompt.Run()
 	if err != nil {
-		return fmt.Errorf("Prompt failed %v\n", err)
+		return fmt.Errorf("prompt failed %v\n", err)
 	}
 
 	prompt = promptui.Prompt{
@@ -59,7 +59,7 @@ func (c *conf) Interactive() error {
 	}
 	c.BinaryStorePath, err = prompt.Run()
 	if err != nil {
-		return fmt.Errorf("Prompt failed %v\n", err)
+		return fmt.Errorf("prompt failed %v\n", err)
 	}
 
 	yaml, err := c.ToYAML()
@@ -75,7 +75,7 @@ func (c *conf) Interactive() error {
 	}
 	c.BinaryStorePath, err = prompt.Run()
 	if err != nil {
-		return fmt.Errorf("Prompt failed %v\n", err)
+		return fmt.Errorf("prompt failed %v\n", err)
 	}
 
 	// SAVE

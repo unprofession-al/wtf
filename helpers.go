@@ -8,15 +8,15 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/hashicorp/go-version"
+	ver "github.com/hashicorp/go-version"
 )
 
 const versionFile = ".terraform-version"
 
-func readConstraint(detectConstraint bool) (version.Constraints, error) {
+func readConstraint(detectConstraint bool) (ver.Constraints, error) {
 	wd, err := os.Getwd()
 	if err != nil {
-		return version.Constraints{}, err
+		return ver.Constraints{}, err
 	}
 
 	filename := fmt.Sprintf("%s/%s", wd, versionFile)
@@ -24,42 +24,42 @@ func readConstraint(detectConstraint bool) (version.Constraints, error) {
 	if err != nil && detectConstraint {
 		return detectSyntax()
 	} else if err != nil {
-		return version.NewConstraint(">= 0.0.0")
+		return ver.NewConstraint(">= 0.0.0")
 	}
 
-	return version.NewConstraint(string(data))
+	return ver.NewConstraint(string(data))
 }
 
-func detectSyntax() (version.Constraints, error) {
+func detectSyntax() (ver.Constraints, error) {
 	wd, err := os.Getwd()
 	if err != nil {
-		return version.Constraints{}, err
+		return ver.Constraints{}, err
 	}
 
 	matches, err := filepath.Glob(fmt.Sprintf("%s/*.tf", wd))
 	if err != nil {
-		return version.Constraints{}, err
+		return ver.Constraints{}, err
 	}
 
 	var all []byte
 	for _, file := range matches {
 		data, err := ioutil.ReadFile(file)
 		if err != nil {
-			return version.Constraints{}, err
+			return ver.Constraints{}, err
 		}
 		all = append(all, data...)
 	}
 
 	matched, err := regexp.Match(`"\${.*}"`, all)
 	if err != nil {
-		return version.Constraints{}, err
+		return ver.Constraints{}, err
 	}
 
 	if matched {
-		return version.NewConstraint("< 0.12.0")
+		return ver.NewConstraint("< 0.12.0")
 	}
 
-	return version.NewConstraint(">= 0.12.0")
+	return ver.NewConstraint(">= 0.12.0")
 }
 
 func createDir(path string) error {
