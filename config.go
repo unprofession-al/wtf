@@ -26,7 +26,7 @@ func NewConfiguration() (*conf, error) {
 	if os.IsNotExist(err) {
 		fmt.Printf("No config file '%s' found, using defaults\n", configFile)
 	} else if err != nil {
-		return c, fmt.Errorf("Config file '%s' could not be read: %s", configFile, err.Error())
+		return c, fmt.Errorf("config file '%s' could not be read: %s", configFile, err.Error())
 	}
 	err = yaml.Unmarshal(data, c)
 
@@ -50,7 +50,7 @@ func (c *conf) Interactive() error {
 	}
 	c.VersionContraintFileName, err = prompt.Run()
 	if err != nil {
-		return fmt.Errorf("prompt failed %v\n", err)
+		return fmt.Errorf("prompt failed %v", err)
 	}
 
 	prompt = promptui.Prompt{
@@ -59,7 +59,7 @@ func (c *conf) Interactive() error {
 	}
 	c.BinaryStorePath, err = prompt.Run()
 	if err != nil {
-		return fmt.Errorf("prompt failed %v\n", err)
+		return fmt.Errorf("prompt failed %v", err)
 	}
 
 	yaml, err := c.ToYAML()
@@ -75,7 +75,7 @@ func (c *conf) Interactive() error {
 	}
 	c.BinaryStorePath, err = prompt.Run()
 	if err != nil {
-		return fmt.Errorf("prompt failed %v\n", err)
+		return fmt.Errorf("prompt failed %v", err)
 	}
 
 	// SAVE
