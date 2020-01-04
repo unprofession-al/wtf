@@ -130,7 +130,7 @@ func (a App) installCmd(cmd *cobra.Command, args []string) {
 	}
 
 	if len(errs) > 0 {
-		fmt.Printf("%d error(s) occured\n", len(errs))
+		fmt.Printf("%d error(s) occurred\n", len(errs))
 		os.Exit(1)
 	}
 }
