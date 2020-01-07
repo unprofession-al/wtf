@@ -67,11 +67,11 @@ func NewApp() *App {
 	return a
 }
 
-func (a App) execCmd(cmd *cobra.Command, args []string) {
+func (a *App) execCmd(cmd *cobra.Command, args []string) {
 	runTerraform(args, true)
 }
 
-func (a App) configureCmd(cmd *cobra.Command, args []string) {
+func (a *App) configureCmd(cmd *cobra.Command, args []string) {
 	k, err := NewConfiguration()
 	if err != nil {
 		fmt.Println(err)
@@ -80,7 +80,7 @@ func (a App) configureCmd(cmd *cobra.Command, args []string) {
 	k.Interactive()
 }
 
-func (a App) configCmd(cmd *cobra.Command, args []string) {
+func (a *App) configCmd(cmd *cobra.Command, args []string) {
 	k, err := NewConfiguration()
 	if err != nil {
 		fmt.Println(err)
@@ -94,7 +94,7 @@ func (a App) configCmd(cmd *cobra.Command, args []string) {
 	fmt.Println(string(out))
 }
 
-func (a App) installCmd(cmd *cobra.Command, args []string) {
+func (a *App) installCmd(cmd *cobra.Command, args []string) {
 	k, err := NewConfiguration()
 	if err != nil {
 		fmt.Println(err)
@@ -135,6 +135,6 @@ func (a App) installCmd(cmd *cobra.Command, args []string) {
 	}
 }
 
-func (a App) versionCmd(cmd *cobra.Command, args []string) {
+func (a *App) versionCmd(cmd *cobra.Command, args []string) {
 	fmt.Println(versionInfo())
 }
