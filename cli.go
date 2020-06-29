@@ -160,6 +160,10 @@ func (a *App) listVersionsCmd(cmd *cobra.Command, args []string) {
 
 	installed := tf.ListInstalled()
 	available, err := tf.ListAvailable()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 
 	for _, v := range available {
 		isInstalled := false
@@ -168,7 +172,7 @@ func (a *App) listVersionsCmd(cmd *cobra.Command, args []string) {
 				isInstalled = true
 			}
 		}
-		out := fmt.Sprintf("%s", v)
+		out := v.String()
 		if isInstalled {
 			out = fmt.Sprintf("%s [installed]", out)
 		}

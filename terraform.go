@@ -86,7 +86,7 @@ func (tf *Terraform) ListAvailable() (ver.Collection, error) {
 		} `json:"versions"`
 	}
 
-	url := fmt.Sprintf("https://releases.hashicorp.com/terraform/index.json")
+	url := "https://releases.hashicorp.com/terraform/index.json"
 	resp, err := http.Get(url)
 	if err != nil {
 		return out, fmt.Errorf("could not download %s: %s", url, err.Error())
