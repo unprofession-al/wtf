@@ -59,7 +59,7 @@ func detectSyntax() (ver.Constraints, error) {
 		return ver.NewConstraint("< 0.12.0")
 	}
 
-	return ver.NewConstraint(">= 0.12.0")
+	return ver.NewConstraint(">= 0.13")
 }
 
 func createDir(path string) error {

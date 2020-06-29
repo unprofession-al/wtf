@@ -3,11 +3,13 @@ package main
 import (
 	"archive/zip"
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"runtime"
+	"sort"
 	"strings"
 
 	ver "github.com/hashicorp/go-version"
@@ -68,6 +70,59 @@ func (tf *Terraform) FindLatest(c ver.Constraints) (*ver.Version, error) {
 	return latest, nil
 }
 
+func (tf *Terraform) ListInstalled() ver.Collection {
+	return tf.versions
+}
+
+func (tf *Terraform) ListAvailable() (ver.Collection, error) {
+	out := ver.Collection{}
+
+	type releaseInfo struct {
+		Versions map[string]struct {
+			Builds []struct {
+				Os   string `json:"os"`
+				Arch string `json:"arch"`
+			} `json:"builds"`
+		} `json:"versions"`
+	}
+
+	url := fmt.Sprintf("https://releases.hashicorp.com/terraform/index.json")
+	resp, err := http.Get(url)
+	if err != nil {
+		return out, fmt.Errorf("could not download %s: %s", url, err.Error())
+	}
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return out, fmt.Errorf("could not download %s: %s", url, resp.Status)
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return out, err
+	}
+
+	releases := releaseInfo{}
+	err = json.Unmarshal(body, &releases)
+	if err != nil {
+		return out, err
+	}
+
+	for vs, spec := range releases.Versions {
+		version, err := ver.NewVersion(vs)
+		if err != nil {
+			continue
+		}
+		for _, build := range spec.Builds {
+			if build.Arch == runtime.GOARCH && build.Os == runtime.GOOS {
+				out = append(out, version)
+			}
+		}
+	}
+
+	sort.Sort(out)
+	return out, nil
+}
+
 func (tf *Terraform) Run(v *ver.Version, args []string, w wrapper) (*os.ProcessState, error) {
 	wd, err := os.Getwd()
 	if err != nil {
@@ -99,28 +154,27 @@ func (tf *Terraform) Run(v *ver.Version, args []string, w wrapper) (*os.ProcessS
 	return status, w.Cleanup()
 }
 
-func (tf *Terraform) DownloadVersion(v *ver.Version) error {
+func (tf *Terraform) DownloadVersion(v *ver.Version) (string, error) {
 	url := fmt.Sprintf("https://releases.hashicorp.com/terraform/%s/terraform_%s_%s_%s.zip", v.String(), v.String(), runtime.GOOS, runtime.GOARCH)
 	filename := fmt.Sprintf("%s/%s", tf.location, v.String())
 
-	fmt.Printf("Getting %s...\n", url)
 	resp, err := http.Get(url)
 	if err != nil {
-		return fmt.Errorf("could not download %s: %s", url, err.Error())
+		return "", fmt.Errorf("could not download %s: %s", url, err.Error())
 	}
 	if resp.StatusCode < 200 || resp.StatusCode > 299 {
-		return fmt.Errorf("could not download %s: %s", url, resp.Status)
+		return "", fmt.Errorf("could not download %s: %s", url, resp.Status)
 	}
 	defer resp.Body.Close()
 
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	zipReader, err := zip.NewReader(bytes.NewReader(body), int64(len(body)))
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	unpacked := false
@@ -131,37 +185,36 @@ func (tf *Terraform) DownloadVersion(v *ver.Version) error {
 
 		t, err := zipped.Open()
 		if err != nil {
-			return err
+			return "", err
 		}
 		defer t.Close()
 
 		b, err := ioutil.ReadAll(t)
 		if err != nil {
-			return err
+			return "", err
 		}
 
 		dest, err := os.Create(filename)
 		if err != nil {
-			return err
+			return "", err
 		}
 		defer dest.Close()
 
 		_, err = dest.Write(b)
 		if err != nil {
-			return err
+			return "", err
 		}
 		dest.Sync()
 		unpacked = true
 	}
 
 	if !unpacked {
-		return fmt.Errorf("could not find file `terraform` not found in downloaded zip")
+		return "", fmt.Errorf("could not find file `terraform` not found in downloaded zip")
 	}
 
 	if err := os.Chmod(filename, 0700); err != nil {
-		return err
+		return "", err
 	}
-	fmt.Println(filename)
 
-	return nil
+	return filename, nil
 }

@@ -56,6 +56,14 @@ func NewApp() *App {
 	}
 	rootCmd.AddCommand(installCmd)
 
+	// list-versions
+	listVersionsCmd := &cobra.Command{
+		Use:   "list-versions",
+		Short: "list versions of terraform",
+		Run:   a.listVersionsCmd,
+	}
+	rootCmd.AddCommand(listVersionsCmd)
+
 	// version
 	versionCmd := &cobra.Command{
 		Use:   "version",
@@ -113,18 +121,20 @@ func (a *App) installCmd(cmd *cobra.Command, args []string) {
 		fmt.Printf("Processing %s...\n", v)
 		this, err := ver.NewVersion(v)
 		if err != nil {
-			err = fmt.Errorf("version string could not be parsed: %s", err.Error())
+			err = fmt.Errorf("version string '%s' could not be parsed: %s", v, err.Error())
 			fmt.Println(err.Error())
 			errs = append(errs, err)
 			continue
 		}
 
-		err = tf.DownloadVersion(this)
+		filepath, err := tf.DownloadVersion(this)
 		if err != nil {
-			err = fmt.Errorf("version could not be downloaded: %s", err.Error())
+			err = fmt.Errorf("version '%s' could not be downloaded: %s", v, err.Error())
 			fmt.Println(err.Error())
 			errs = append(errs, err)
 			continue
+		} else {
+			fmt.Printf("version '%s' installed at '%s'\n", v, filepath)
 		}
 
 	}
@@ -133,6 +143,38 @@ func (a *App) installCmd(cmd *cobra.Command, args []string) {
 		fmt.Printf("%d error(s) occurred\n", len(errs))
 		os.Exit(1)
 	}
+}
+
+func (a *App) listVersionsCmd(cmd *cobra.Command, args []string) {
+	k, err := NewConfiguration()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	tf, err := NewTerraform(k.BinaryStorePath, true)
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	installed := tf.ListInstalled()
+	available, err := tf.ListAvailable()
+
+	for _, v := range available {
+		isInstalled := false
+		for _, i := range installed {
+			if v.Equal(i) {
+				isInstalled = true
+			}
+		}
+		out := fmt.Sprintf("%s", v)
+		if isInstalled {
+			out = fmt.Sprintf("%s [installed]", out)
+		}
+		fmt.Println(out)
+	}
+
 }
 
 func (a *App) versionCmd(cmd *cobra.Command, args []string) {
