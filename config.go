@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/manifoldco/promptui"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 const configFile = "~/.config/wtf/config.yaml"
