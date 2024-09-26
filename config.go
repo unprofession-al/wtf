@@ -80,7 +80,10 @@ func (c *conf) Interactive() error {
 	// SAVE
 	path := expandPath(configFile)
 	dir := filepath.Dir(path)
-	createDir(dir)
+	err = createDir(dir)
+	if err != nil {
+		return err
+	}
 
 	f, err := os.Create(path)
 	if err != nil {
@@ -92,8 +95,8 @@ func (c *conf) Interactive() error {
 		return err
 	}
 
-	f.Sync()
-	return nil
+	err = f.Sync()
+	return err
 }
 
 func (c conf) ToYAML() ([]byte, error) {

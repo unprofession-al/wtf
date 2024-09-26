@@ -19,7 +19,7 @@ func readConstraint(detectConstraint bool) (ver.Constraints, error) {
 
 	filename := fmt.Sprintf("%s/%s", wd, versionFile)
 	data, err := os.ReadFile(filename)
-	if err == nil {
+	if err != nil || len(data) == 0 {
 		return ver.NewConstraint(">= 0.0.0")
 	}
 

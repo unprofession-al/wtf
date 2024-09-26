@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"runtime"
@@ -23,12 +23,15 @@ type Terraform struct {
 
 func NewTerraform(location string, verbose bool) (*Terraform, error) {
 	location = expandPath(location)
-	createDir(location)
+	err := createDir(location)
+	if err != nil {
+		return nil, err
+	}
 	tf := &Terraform{
 		location: strings.TrimRight(location, "/"),
 		verbose:  verbose,
 	}
-	files, err := ioutil.ReadDir(tf.location)
+	files, err := os.ReadDir(tf.location)
 	if err != nil {
 		return tf, err
 	}
@@ -96,7 +99,7 @@ func (tf *Terraform) ListAvailable() (ver.Collection, error) {
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return out, err
 	}
@@ -167,7 +170,7 @@ func (tf *Terraform) DownloadVersion(v *ver.Version) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}
@@ -189,7 +192,7 @@ func (tf *Terraform) DownloadVersion(v *ver.Version) (string, error) {
 		}
 		defer t.Close()
 
-		b, err := ioutil.ReadAll(t)
+		b, err := io.ReadAll(t)
 		if err != nil {
 			return "", err
 		}
@@ -204,7 +207,11 @@ func (tf *Terraform) DownloadVersion(v *ver.Version) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		dest.Sync()
+
+		err = dest.Sync()
+		if err != nil {
+			return "", err
+		}
 		unpacked = true
 	}
 

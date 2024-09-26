@@ -2,8 +2,6 @@ package main
 
 import (
 	"bytes"
-	"io/ioutil"
-	"log"
 	"os"
 	"strings"
 	"text/template"
@@ -39,10 +37,9 @@ func (w *wrapper) Wrap(command string, args []string, verbose bool) (string, []s
 		return command, args, err
 	}
 
-	w.tmpfile, err = ioutil.TempFile("", "wrapped.terraform.*.wtf")
+	w.tmpfile, err = os.CreateTemp("", "wrapped.terraform.*.wtf")
 	if err != nil {
 		return command, args, err
-		log.Fatal(err)
 	}
 
 	if _, err := w.tmpfile.Write(out.Bytes()); err != nil {

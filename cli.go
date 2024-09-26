@@ -85,7 +85,11 @@ func (a *App) configureCmd(cmd *cobra.Command, args []string) {
 		fmt.Println(err)
 		os.Exit(1)
 	}
-	k.Interactive()
+	err = k.Interactive()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
 }
 
 func (a *App) configCmd(cmd *cobra.Command, args []string) {
