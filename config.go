@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -22,7 +21,7 @@ type conf struct {
 func NewConfiguration() (*conf, error) {
 	c := NewConfigurationDefaults()
 
-	data, err := ioutil.ReadFile(expandPath(configFile))
+	data, err := os.ReadFile(expandPath(configFile))
 	if os.IsNotExist(err) {
 		fmt.Printf("No config file '%s' found, using defaults\n", configFile)
 	} else if err != nil {

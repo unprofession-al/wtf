@@ -182,5 +182,5 @@ func (a *App) listVersionsCmd(cmd *cobra.Command, args []string) {
 }
 
 func (a *App) versionCmd(cmd *cobra.Command, args []string) {
-	fmt.Println(versionInfo())
+	fmt.Println(VersionInfo())
 }
