@@ -37,11 +37,7 @@ func readConstraint() (ver.Constraints, error) {
 		return ver.Constraints{}, err
 	}
 	var versionFile VersionFile
-	err = hclsimple.Decode("c.hcl", data, nil, &versionFile)
-	if err != nil {
-		return ver.Constraints{}, err
-	}
-
+	_ = hclsimple.Decode("c.hcl", data, nil, &versionFile)
 	return ver.NewConstraint(versionFile.Terraform.RequiredVersion)
 }
 
