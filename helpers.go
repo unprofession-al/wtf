@@ -1,29 +1,48 @@
 package main
 
 import (
-	"fmt"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
 
 	ver "github.com/hashicorp/go-version"
+	"github.com/hashicorp/hcl/v2/hclsimple"
 )
 
-const versionFile = ".terraform-version"
+type VersionFile struct {
+	Terraform TerraformConfig `hcl:"terraform,block"`
+}
 
-func readConstraint(detectConstraint bool) (ver.Constraints, error) {
+type TerraformConfig struct {
+	RequiredVersion string `hcl:"required_version"`
+}
+
+func readConstraint() (ver.Constraints, error) {
 	wd, err := os.Getwd()
 	if err != nil {
 		return ver.Constraints{}, err
 	}
 
-	filename := fmt.Sprintf("%s/%s", wd, versionFile)
-	data, err := os.ReadFile(filename)
-	if err != nil || len(data) == 0 {
-		return ver.NewConstraint(">= 0.0.0")
+	filename := filepath.Join(wd, "versions.tf")
+
+	if _, err := os.Stat(filename); errors.Is(err, os.ErrNotExist) {
+		return ver.Constraints{}, nil
+	} else if err != nil {
+		return ver.Constraints{}, err
 	}
 
-	return ver.NewConstraint(string(data))
+	data, err := os.ReadFile(filename)
+	if err != nil {
+		return ver.Constraints{}, err
+	}
+	var versionFile VersionFile
+	err = hclsimple.Decode("c.hcl", data, nil, &versionFile)
+	if err != nil {
+		return ver.Constraints{}, err
+	}
+
+	return ver.NewConstraint(versionFile.Terraform.RequiredVersion)
 }
 
 func createDir(path string) error {

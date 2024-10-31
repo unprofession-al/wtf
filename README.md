@@ -8,10 +8,7 @@ and helps you to run the version required for your project.
 * Install new (or old) versions of terraform using `wtf install [terraform_version]`.
 * Run terraform via `wtf exec ...` (using the regular terraform commands and options) to execute 
 `terraform` or create a symlink from `terraform` to `wtf` for convenience.
-* Detect if a project has used pre or post v0.12.0 terraform syntax automatically and run the best 
-fitting terraform version automatically.
-* Force a certain version by putting your version constraints (such as `>= 0.12.0`) in a 
-`.terraform-version` file in your project folder.
+* Ensure that the proper terraform version according to your versions.tf file is used.
 * If required you can define a wrapper script template in `wtf`'s configuration file. The template
 will be rendered to a temp file and then executed rather than terraform itself.
 
@@ -62,9 +59,7 @@ Heres an example:
 
 ```
 ---
-version_contraint_file_name: .terraform-version
 binary_store_path: ~/.bin/terraform.versions/
-detect_syntax: true
 wrapper:
   script_template: |
     #!/bin/bash

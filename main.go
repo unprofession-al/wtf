@@ -31,7 +31,7 @@ func runTerraform(args []string, verbose bool) {
 		os.Exit(1)
 	}
 
-	c, err := readConstraint(k.DetectSyntax)
+	c, err := readConstraint()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)

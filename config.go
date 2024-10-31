@@ -12,10 +12,8 @@ import (
 const configFile = "~/.config/wtf/config.yaml"
 
 type conf struct {
-	VersionContraintFileName string  `yaml:"version_contraint_file_name"`
-	BinaryStorePath          string  `yaml:"binary_store_path"`
-	DetectSyntax             bool    `yaml:"detect_syntax"`
-	Wrapper                  wrapper `yaml:"wrapper"`
+	BinaryStorePath string  `yaml:"binary_store_path"`
+	Wrapper         wrapper `yaml:"wrapper"`
 }
 
 func NewConfiguration() (*conf, error) {
@@ -34,9 +32,7 @@ func NewConfiguration() (*conf, error) {
 
 func NewConfigurationDefaults() *conf {
 	return &conf{
-		VersionContraintFileName: ".terraform-version",
-		BinaryStorePath:          "~/.bin/terraform.versions/",
-		DetectSyntax:             true,
+		BinaryStorePath: "~/.bin/terraform.versions/",
 	}
 }
 
@@ -44,15 +40,6 @@ func (c *conf) Interactive() error {
 	var err error
 
 	prompt := promptui.Prompt{
-		Label:   "Version constraint file name ",
-		Default: c.VersionContraintFileName,
-	}
-	c.VersionContraintFileName, err = prompt.Run()
-	if err != nil {
-		return fmt.Errorf("prompt failed %v", err)
-	}
-
-	prompt = promptui.Prompt{
 		Label:   "Binary Store Path ",
 		Default: c.BinaryStorePath,
 	}
