@@ -36,9 +36,14 @@ func readConstraint() (ver.Constraints, error) {
 	if err != nil {
 		return ver.Constraints{}, err
 	}
+
 	var versionFile VersionFile
 	_ = hclsimple.Decode("c.hcl", data, nil, &versionFile)
-	return ver.NewConstraint(versionFile.Terraform.RequiredVersion)
+	if strings.TrimSpace(versionFile.Terraform.RequiredVersion) != "" {
+		return ver.NewConstraint(versionFile.Terraform.RequiredVersion)
+	}
+
+	return ver.Constraints{}, err
 }
 
 func createDir(path string) error {
