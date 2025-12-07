@@ -14,9 +14,9 @@
       {
         packages.default = pkgs.buildGoModule {
           pname = "wtf";
-          version = "0.2.1";
+          version = "1.0.0";
           src = ./.;
-          vendorHash = "sha256-9HvkwQTfrTsFBGXGHS8VmCrnOgWTzXpk1jeZtyTepqU=";
+          vendorHash = "sha256-JgC0pv3Wy+jZqgF6LqZ5OujCDW0CkBYoQvjxERJIbEA=";
         };
 
         devShells.default = pkgs.mkShell {
