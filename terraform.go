@@ -3,6 +3,8 @@ package main
 import (
 	"archive/zip"
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -158,9 +160,49 @@ func (tf *Terraform) Run(v *ver.Version, args []string, w wrapper) (*os.ProcessS
 	return status, w.Cleanup()
 }
 
+// fetchExpectedChecksum downloads the SHA256SUMS file and returns the expected
+// checksum for the given zip filename.
+func fetchExpectedChecksum(v *ver.Version, zipFilename string) (string, error) {
+	url := fmt.Sprintf("https://releases.hashicorp.com/terraform/%s/terraform_%s_SHA256SUMS", v.String(), v.String())
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return "", fmt.Errorf("could not download checksums from %s: %s", url, err.Error())
+	}
+	if resp.StatusCode < 200 || resp.StatusCode > 299 {
+		return "", fmt.Errorf("could not download checksums from %s: %s", url, resp.Status)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("could not read checksums: %s", err.Error())
+	}
+
+	// SHA256SUMS format: "<hash>  <filename>\n"
+	for _, line := range strings.Split(string(body), "\n") {
+		parts := strings.Fields(line)
+		if len(parts) != 2 {
+			continue
+		}
+		if parts[1] == zipFilename {
+			return parts[0], nil
+		}
+	}
+
+	return "", fmt.Errorf("checksum not found for %s", zipFilename)
+}
+
 func (tf *Terraform) DownloadVersion(v *ver.Version) (string, error) {
-	url := fmt.Sprintf("https://releases.hashicorp.com/terraform/%s/terraform_%s_%s_%s.zip", v.String(), v.String(), runtime.GOOS, runtime.GOARCH)
+	zipFilename := fmt.Sprintf("terraform_%s_%s_%s.zip", v.String(), runtime.GOOS, runtime.GOARCH)
+	url := fmt.Sprintf("https://releases.hashicorp.com/terraform/%s/%s", v.String(), zipFilename)
 	filename := filepath.Join(tf.location, v.String())
+
+	// Fetch expected checksum first
+	expectedChecksum, err := fetchExpectedChecksum(v, zipFilename)
+	if err != nil {
+		return "", err
+	}
 
 	resp, err := http.Get(url)
 	if err != nil {
@@ -174,6 +216,13 @@ func (tf *Terraform) DownloadVersion(v *ver.Version) (string, error) {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
+	}
+
+	// Verify checksum
+	hash := sha256.Sum256(body)
+	actualChecksum := hex.EncodeToString(hash[:])
+	if actualChecksum != expectedChecksum {
+		return "", fmt.Errorf("checksum mismatch for %s: expected %s, got %s", zipFilename, expectedChecksum, actualChecksum)
 	}
 
 	zipReader, err := zip.NewReader(bytes.NewReader(body), int64(len(body)))
