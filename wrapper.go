@@ -19,11 +19,13 @@ func (w *wrapper) Wrap(command string, args []string, verbose bool) (string, []s
 	c := strings.Join(append([]string{command}, args...), " ")
 
 	data := struct {
-		Command string
-		Verbose bool
+		TerraformBin string
+		Command      string
+		Verbose      bool
 	}{
-		Command: c,
-		Verbose: verbose,
+		TerraformBin: command,
+		Command:      c,
+		Verbose:      verbose,
 	}
 
 	var out bytes.Buffer
