@@ -15,7 +15,6 @@ func main() {
 
 	if filepath.Base(bin) == "terraform" {
 		runTerraform(args, false)
-		os.Exit(0)
 	}
 
 	if err := NewApp().Execute(); err != nil {

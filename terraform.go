@@ -14,9 +14,15 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+	"time"
 
 	ver "github.com/hashicorp/go-version"
 )
+
+// httpClient is a shared HTTP client with reasonable timeouts
+var httpClient = &http.Client{
+	Timeout: 5 * time.Minute,
+}
 
 type Terraform struct {
 	location string
@@ -42,7 +48,8 @@ func NewTerraform(location string, verbose bool) (*Terraform, error) {
 	for _, f := range files {
 		v, err := ver.NewVersion(f.Name())
 		if err != nil {
-			return tf, err
+			// Skip entries that don't look like version numbers (e.g., .DS_Store)
+			continue
 		}
 		tf.versions = append(tf.versions, v)
 	}
@@ -93,7 +100,7 @@ func (tf *Terraform) ListAvailable() (ver.Collection, error) {
 	}
 
 	url := "https://releases.hashicorp.com/terraform/index.json"
-	resp, err := http.Get(url)
+	resp, err := httpClient.Get(url)
 	if err != nil {
 		return out, fmt.Errorf("could not download %s: %s", url, err.Error())
 	}
@@ -165,7 +172,7 @@ func (tf *Terraform) Run(v *ver.Version, args []string, w wrapper) (*os.ProcessS
 func fetchExpectedChecksum(v *ver.Version, zipFilename string) (string, error) {
 	url := fmt.Sprintf("https://releases.hashicorp.com/terraform/%s/terraform_%s_SHA256SUMS", v.String(), v.String())
 
-	resp, err := http.Get(url)
+	resp, err := httpClient.Get(url)
 	if err != nil {
 		return "", fmt.Errorf("could not download checksums from %s: %s", url, err.Error())
 	}
@@ -204,7 +211,7 @@ func (tf *Terraform) DownloadVersion(v *ver.Version) (string, error) {
 		return "", err
 	}
 
-	resp, err := http.Get(url)
+	resp, err := httpClient.Get(url)
 	if err != nil {
 		return "", fmt.Errorf("could not download %s: %s", url, err.Error())
 	}
@@ -230,9 +237,15 @@ func (tf *Terraform) DownloadVersion(v *ver.Version) (string, error) {
 		return "", err
 	}
 
+	// On Windows, the binary is named terraform.exe
+	expectedName := "terraform"
+	if runtime.GOOS == "windows" {
+		expectedName = "terraform.exe"
+	}
+
 	unpacked := false
 	for _, zipped := range zipReader.File {
-		if zipped.Name != "terraform" {
+		if zipped.Name != expectedName {
 			continue
 		}
 
@@ -266,7 +279,7 @@ func (tf *Terraform) DownloadVersion(v *ver.Version) (string, error) {
 	}
 
 	if !unpacked {
-		return "", fmt.Errorf("could not find file `terraform` not found in downloaded zip")
+		return "", fmt.Errorf("could not find file `%s` in downloaded zip", expectedName)
 	}
 
 	if err := os.Chmod(filename, 0700); err != nil {
