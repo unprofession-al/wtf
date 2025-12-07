@@ -31,8 +31,11 @@ type Terraform struct {
 }
 
 func NewTerraform(location string, verbose bool) (*Terraform, error) {
-	location = expandPath(location)
-	err := createDir(location)
+	location, err := expandPath(location)
+	if err != nil {
+		return nil, err
+	}
+	err = createDir(location)
 	if err != nil {
 		return nil, err
 	}
@@ -253,9 +256,9 @@ func (tf *Terraform) DownloadVersion(v *ver.Version) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		defer t.Close()
 
 		b, err := io.ReadAll(t)
+		t.Close()
 		if err != nil {
 			return "", err
 		}
@@ -264,14 +267,15 @@ func (tf *Terraform) DownloadVersion(v *ver.Version) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		defer dest.Close()
 
 		_, err = dest.Write(b)
 		if err != nil {
+			dest.Close()
 			return "", err
 		}
 
 		err = dest.Sync()
+		dest.Close()
 		if err != nil {
 			return "", err
 		}

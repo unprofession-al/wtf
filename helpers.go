@@ -53,12 +53,17 @@ func createDir(path string) error {
 	return os.MkdirAll(path, os.ModePerm)
 }
 
-func expandPath(path string) string {
-	dir, _ := os.UserHomeDir()
-	if path == "~" {
-		path = dir
-	} else if strings.HasPrefix(path, "~/") {
-		path = filepath.Join(dir, path[2:])
+func expandPath(path string) (string, error) {
+	if path == "~" || strings.HasPrefix(path, "~/") {
+		dir, err := os.UserHomeDir()
+		if err != nil {
+			return "", fmt.Errorf("could not determine home directory: %w", err)
+		}
+		if path == "~" {
+			path = dir
+		} else {
+			path = filepath.Join(dir, path[2:])
+		}
 	}
-	return os.ExpandEnv(path)
+	return os.ExpandEnv(path), nil
 }
