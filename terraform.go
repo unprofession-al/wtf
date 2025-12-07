@@ -17,6 +17,7 @@ import (
 	"time"
 
 	ver "github.com/hashicorp/go-version"
+	"github.com/schollz/progressbar/v3"
 )
 
 // httpClient is a shared HTTP client with reasonable timeouts
@@ -223,10 +224,16 @@ func (tf *Terraform) DownloadVersion(v *ver.Version) (string, error) {
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
+	bar := progressbar.DefaultBytes(
+		resp.ContentLength,
+		fmt.Sprintf("Downloading terraform %s", v.String()),
+	)
+
+	body, err := io.ReadAll(io.TeeReader(resp.Body, bar))
 	if err != nil {
 		return "", err
 	}
+	fmt.Println() // newline after progress bar
 
 	// Verify checksum
 	hash := sha256.Sum256(body)
