@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -38,12 +39,14 @@ func readConstraint() (ver.Constraints, error) {
 	}
 
 	var versionFile VersionFile
-	_ = hclsimple.Decode("c.hcl", data, nil, &versionFile)
+	if err := hclsimple.Decode("c.hcl", data, nil, &versionFile); err != nil {
+		return ver.Constraints{}, fmt.Errorf("failed to parse versions.tf: %w", err)
+	}
 	if strings.TrimSpace(versionFile.Terraform.RequiredVersion) != "" {
 		return ver.NewConstraint(versionFile.Terraform.RequiredVersion)
 	}
 
-	return ver.Constraints{}, err
+	return ver.Constraints{}, nil
 }
 
 func createDir(path string) error {

@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"runtime"
 	"sort"
 	"strings"
@@ -137,7 +138,7 @@ func (tf *Terraform) Run(v *ver.Version, args []string, w wrapper) (*os.ProcessS
 		Dir:   wd,
 	}
 
-	bin := fmt.Sprintf("%s/%s", tf.location, v.String())
+	bin := filepath.Join(tf.location, v.String())
 
 	cmd, args, err := w.Wrap(bin, args, tf.verbose)
 	if err != nil {
@@ -159,7 +160,7 @@ func (tf *Terraform) Run(v *ver.Version, args []string, w wrapper) (*os.ProcessS
 
 func (tf *Terraform) DownloadVersion(v *ver.Version) (string, error) {
 	url := fmt.Sprintf("https://releases.hashicorp.com/terraform/%s/terraform_%s_%s_%s.zip", v.String(), v.String(), runtime.GOOS, runtime.GOARCH)
-	filename := fmt.Sprintf("%s/%s", tf.location, v.String())
+	filename := filepath.Join(tf.location, v.String())
 
 	resp, err := http.Get(url)
 	if err != nil {
