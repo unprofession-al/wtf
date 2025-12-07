@@ -18,10 +18,18 @@ func NewApp() *App {
 
 	// root
 	rootCmd := &cobra.Command{
-		Use:   "wtf",
-		Short: "Wrapper for Terraform: Transparently work with multiple terraform versions",
+		Use:           "wtf",
+		Short:         "Wrapper for Terraform: Transparently work with multiple terraform versions",
+		SilenceUsage:  true,
+		SilenceErrors: true,
 	}
-	a.Execute = rootCmd.Execute
+	a.Execute = func() error {
+		if err := rootCmd.Execute(); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return nil
+	}
 
 	// exec
 	execCmd := &cobra.Command{
@@ -32,27 +40,11 @@ func NewApp() *App {
 	}
 	rootCmd.AddCommand(execCmd)
 
-	// configure
-	configureCmd := &cobra.Command{
-		Use:   "configure",
-		Short: "Configure interactively",
-		Run:   a.configureCmd,
-	}
-	rootCmd.AddCommand(configureCmd)
-
-	// config
-	configCmd := &cobra.Command{
-		Use:   "config",
-		Short: "Print configuration",
-		Run:   a.configCmd,
-	}
-	rootCmd.AddCommand(configCmd)
-
 	// install
 	installCmd := &cobra.Command{
 		Use:   "install",
 		Short: "install a version of terraform",
-		Run:   a.installCmd,
+		RunE:  a.installCmd,
 	}
 	rootCmd.AddCommand(installCmd)
 
@@ -60,7 +52,7 @@ func NewApp() *App {
 	listVersionsCmd := &cobra.Command{
 		Use:   "list-versions",
 		Short: "list versions of terraform",
-		Run:   a.listVersionsCmd,
+		RunE:  a.listVersionsCmd,
 	}
 	rootCmd.AddCommand(listVersionsCmd)
 
@@ -79,44 +71,15 @@ func (a *App) execCmd(cmd *cobra.Command, args []string) {
 	runTerraform(args, true)
 }
 
-func (a *App) configureCmd(cmd *cobra.Command, args []string) {
+func (a *App) installCmd(cmd *cobra.Command, args []string) error {
 	k, err := NewConfiguration()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	err = k.Interactive()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-}
-
-func (a *App) configCmd(cmd *cobra.Command, args []string) {
-	k, err := NewConfiguration()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	out, err := k.ToYAML()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-	fmt.Println(string(out))
-}
-
-func (a *App) installCmd(cmd *cobra.Command, args []string) {
-	k, err := NewConfiguration()
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
 	tf, err := NewTerraform(k.BinaryStorePath, true)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
 	errs := []error{}
@@ -144,29 +107,26 @@ func (a *App) installCmd(cmd *cobra.Command, args []string) {
 	}
 
 	if len(errs) > 0 {
-		fmt.Printf("%d error(s) occurred\n", len(errs))
-		os.Exit(1)
+		return fmt.Errorf("%d error(s) occurred", len(errs))
 	}
+	return nil
 }
 
-func (a *App) listVersionsCmd(cmd *cobra.Command, args []string) {
+func (a *App) listVersionsCmd(cmd *cobra.Command, args []string) error {
 	k, err := NewConfiguration()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
 	tf, err := NewTerraform(k.BinaryStorePath, true)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
 	installed := tf.ListInstalled()
 	available, err := tf.ListAvailable()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
 	for _, v := range available {
@@ -182,7 +142,7 @@ func (a *App) listVersionsCmd(cmd *cobra.Command, args []string) {
 		}
 		fmt.Println(out)
 	}
-
+	return nil
 }
 
 func (a *App) versionCmd(cmd *cobra.Command, args []string) {

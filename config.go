@@ -5,11 +5,26 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/manifoldco/promptui"
 	"gopkg.in/yaml.v3"
 )
 
-const configFile = "~/.config/wtf/config.yaml"
+func getConfigFile() string {
+	configHome := os.Getenv("XDG_CONFIG_HOME")
+	if configHome == "" {
+		home, _ := os.UserHomeDir()
+		configHome = filepath.Join(home, ".config")
+	}
+	return filepath.Join(configHome, "wtf", "config.yaml")
+}
+
+func getDefaultDataDir() string {
+	dataHome := os.Getenv("XDG_DATA_HOME")
+	if dataHome == "" {
+		home, _ := os.UserHomeDir()
+		dataHome = filepath.Join(home, ".local", "share")
+	}
+	return filepath.Join(dataHome, "wtf", "terraform-versions")
+}
 
 type conf struct {
 	BinaryStorePath string  `yaml:"binary_store_path"`
@@ -19,7 +34,8 @@ type conf struct {
 func NewConfiguration() (*conf, error) {
 	c := NewConfigurationDefaults()
 
-	data, err := os.ReadFile(expandPath(configFile))
+	configFile := getConfigFile()
+	data, err := os.ReadFile(configFile)
 	if os.IsNotExist(err) {
 		fmt.Printf("No config file '%s' found, using defaults\n", configFile)
 	} else if err != nil {
@@ -32,60 +48,6 @@ func NewConfiguration() (*conf, error) {
 
 func NewConfigurationDefaults() *conf {
 	return &conf{
-		BinaryStorePath: "~/.bin/terraform.versions/",
+		BinaryStorePath: getDefaultDataDir(),
 	}
-}
-
-func (c *conf) Interactive() error {
-	var err error
-
-	prompt := promptui.Prompt{
-		Label:   "Binary Store Path ",
-		Default: c.BinaryStorePath,
-	}
-	c.BinaryStorePath, err = prompt.Run()
-	if err != nil {
-		return fmt.Errorf("prompt failed %v", err)
-	}
-
-	yaml, err := c.ToYAML()
-	if err != nil {
-		return err
-	}
-	yaml = append([]byte("---\n"), yaml...)
-	fmt.Printf("\nYour configuration is:\n\n%s\n", string(yaml))
-
-	prompt = promptui.Prompt{
-		Label:     fmt.Sprintf("Save to %s", expandPath(configFile)),
-		IsConfirm: true,
-	}
-	c.BinaryStorePath, err = prompt.Run()
-	if err != nil {
-		return fmt.Errorf("prompt failed %v", err)
-	}
-
-	// SAVE
-	path := expandPath(configFile)
-	dir := filepath.Dir(path)
-	err = createDir(dir)
-	if err != nil {
-		return err
-	}
-
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-
-	_, err = f.Write(yaml)
-	if err != nil {
-		return err
-	}
-
-	err = f.Sync()
-	return err
-}
-
-func (c conf) ToYAML() ([]byte, error) {
-	return yaml.Marshal(c)
 }
