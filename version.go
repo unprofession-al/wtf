@@ -18,7 +18,6 @@ func GetCommit() string {
 	commit := "unknown"
 	state := "unknown"
 	for _, setting := range info.Settings {
-		fmt.Println(setting.Key, setting.Value)
 		switch setting.Key {
 		case "vcs.revision":
 			commit = setting.Value
