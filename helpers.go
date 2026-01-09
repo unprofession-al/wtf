@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	ver "github.com/hashicorp/go-version"
+	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsimple"
 )
 
@@ -15,8 +16,14 @@ type VersionFile struct {
 	Terraform TerraformConfig `hcl:"terraform,block"`
 }
 
+// TerraformConfig represents the terraform block in versions.tf.
+// The hclsimple decoder is strict and rejects unknown blocks/attributes.
+// We use the Remain field to capture any additional HCL content (such as
+// required_providers blocks) that we don't need to parse, allowing the
+// decoder to succeed without failing on unsupported block types.
 type TerraformConfig struct {
-	RequiredVersion string `hcl:"required_version"`
+	RequiredVersion string   `hcl:"required_version,optional"`
+	Remain          hcl.Body `hcl:",remain"`
 }
 
 func readConstraint() (ver.Constraints, error) {

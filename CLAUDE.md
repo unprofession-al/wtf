@@ -59,7 +59,3 @@ nix develop         # Enter dev shell with Go and golangci-lint
 - Use table-driven tests (see `terraform_test.go`, `helpers_test.go` for examples)
 - Tests create temp directories and change working directory for isolation
 - Helper functions `mustVersions()` and `mustConstraint()` create test fixtures
-
-## Known Limitation
-
-The HCL parser (`hclsimple`) does not support `required_providers` blocks in `versions.tf`. Files with this block will fail to parse - only `required_version` in the terraform block is supported.

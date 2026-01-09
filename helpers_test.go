@@ -175,8 +175,7 @@ terraform {
 			expectError:        false,
 		},
 		{
-			// NOTE: This documents a limitation - hclsimple doesn't support required_providers block
-			name: "versions.tf with required_providers fails",
+			name: "versions.tf with required_providers parses successfully",
 			versionsContent: `
 terraform {
   required_version = ">= 1.3.0"
@@ -188,9 +187,10 @@ terraform {
   }
 }
 `,
-			createFile:    true,
-			expectError:   true,
-			errorContains: "Unsupported block type",
+			createFile:         true,
+			expectedEmpty:      false,
+			expectedConstraint: ">= 1.3.0",
+			expectError:        false,
 		},
 	}
 
